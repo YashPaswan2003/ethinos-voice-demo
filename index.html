@@ -60,29 +60,29 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a0
 /* Status bar at bottom */
 .call-status-bar{padding:16px;text-align:center;flex-shrink:0}
 
-/* Pulsing orb */
-.orb-container{display:flex;flex-direction:column;align-items:center;gap:12px}
-.orb{width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;transition:.3s;position:relative}
-.orb.listening{background:rgba(96,165,250,0.15);border:2px solid rgba(96,165,250,0.4);animation:orb-pulse-listen 2s infinite}
-.orb.speaking{background:rgba(167,139,250,0.15);border:2px solid rgba(167,139,250,0.4);animation:orb-pulse-speak 1s infinite}
-.orb.thinking{background:rgba(250,204,21,0.1);border:2px solid rgba(250,204,21,0.3);animation:orb-pulse-think 1.2s infinite}
-.orb.idle{background:rgba(255,255,255,0.05);border:2px solid rgba(255,255,255,0.1)}
+/* Pulsing orb — Samvaad-style */
+.orb-container{display:flex;flex-direction:column;align-items:center;gap:8px}
+.orb{width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;transition:.3s;position:relative;color:rgba(255,255,255,0.8);text-align:center;letter-spacing:0.3px;cursor:default}
+.orb.listening{background:radial-gradient(circle at 40% 35%,rgba(200,130,220,0.6),rgba(96,165,250,0.4));border:2px solid rgba(96,165,250,0.3);animation:orb-pulse-listen 2s infinite;color:#fff}
+.orb.speaking{background:radial-gradient(circle at 40% 35%,rgba(167,139,250,0.6),rgba(200,130,220,0.4));border:2px solid rgba(167,139,250,0.3);animation:orb-pulse-speak 1s infinite;color:#fff}
+.orb.thinking{background:radial-gradient(circle at 40% 35%,rgba(250,204,21,0.4),rgba(200,130,220,0.3));border:2px solid rgba(250,204,21,0.2);animation:orb-pulse-think 1.2s infinite;color:#fff}
+.orb.idle{background:radial-gradient(circle at 40% 35%,rgba(200,130,220,0.3),rgba(150,120,200,0.2));border:2px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.6)}
 
 @keyframes orb-pulse-listen{
-  0%,100%{box-shadow:0 0 0 0 rgba(96,165,250,0.3)}
-  50%{box-shadow:0 0 0 18px rgba(96,165,250,0)}
+  0%,100%{box-shadow:0 0 0 0 rgba(96,165,250,0.3),0 0 30px rgba(200,130,220,0.15)}
+  50%{box-shadow:0 0 0 18px rgba(96,165,250,0),0 0 40px rgba(200,130,220,0.25)}
 }
 @keyframes orb-pulse-speak{
-  0%,100%{box-shadow:0 0 0 0 rgba(167,139,250,0.3)}
-  50%{box-shadow:0 0 0 14px rgba(167,139,250,0)}
+  0%,100%{box-shadow:0 0 0 0 rgba(167,139,250,0.3),0 0 30px rgba(200,130,220,0.15)}
+  50%{box-shadow:0 0 0 14px rgba(167,139,250,0),0 0 40px rgba(200,130,220,0.25)}
 }
 @keyframes orb-pulse-think{
-  0%,100%{box-shadow:0 0 0 0 rgba(250,204,21,0.2)}
-  50%{box-shadow:0 0 0 12px rgba(250,204,21,0)}
+  0%,100%{box-shadow:0 0 0 0 rgba(250,204,21,0.2),0 0 25px rgba(200,130,220,0.1)}
+  50%{box-shadow:0 0 0 12px rgba(250,204,21,0),0 0 35px rgba(200,130,220,0.2)}
 }
 
-.orb-label{font-size:13px;font-weight:600;color:#aaa}
-.orb-hint{font-size:11px;color:#666;margin-top:2px}
+.orb-label{display:none}
+.orb-hint{display:none}
 
 .end-call-btn{background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.2);border-radius:50px;padding:10px 24px;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;margin-top:14px}
 .end-call-btn:hover{background:rgba(239,68,68,0.25)}
@@ -206,8 +206,8 @@ textarea:focus{border-color:#60a5fa}
 
     <div class="call-status-bar">
       <div class="orb-container">
-        <div class="orb idle" id="orb">🎙️</div>
-        <div class="orb-label" id="orbLabel">Ready</div>
+        <div class="orb idle" id="orb">Start Speaking</div>
+        <div class="orb-label" id="orbLabel"></div>
         <div class="orb-hint" id="orbHint"></div>
       </div>
       <button class="end-call-btn" onclick="endCall()">End Call</button>
@@ -376,7 +376,7 @@ async function startCall() {
   addMessage('ai', greeting);
   // NOTE: greeting NOT added to conversationHistory — to satisfy API ordering
 
-  setOrbState('speaking', 'AI is speaking...', 'Listen to the greeting');
+  setOrbState('speaking');
   await speakText(greeting);
 
   // After greeting finishes, start listening automatically
@@ -391,7 +391,7 @@ function endCall() {
   document.getElementById('callSetup').classList.remove('hide');
   document.getElementById('callActive').classList.remove('show');
   conversationHistory = [];
-  setOrbState('idle', 'Ready', '');
+  setOrbState('idle');
 }
 
 function addMessage(role, text) {
@@ -403,19 +403,23 @@ function addMessage(role, text) {
   chat.scrollTop = chat.scrollHeight;
 }
 
-function setOrbState(state, label, hint) {
+function setOrbState(state) {
   const orb = document.getElementById('orb');
   orb.className = 'orb ' + state;
-  orb.innerHTML = state === 'listening' ? '🎙️' : state === 'speaking' ? '🔊' : state === 'thinking' ? '🧠' : '🎙️';
-  document.getElementById('orbLabel').textContent = label || '';
-  document.getElementById('orbHint').textContent = hint || '';
+  const labels = {
+    listening: 'Listening...',
+    speaking: 'Speaking...',
+    thinking: 'Thinking...',
+    idle: 'Start\nSpeaking'
+  };
+  orb.textContent = labels[state] || '';
 }
 
 // =========== AUTO-LISTENING WITH SILENCE DETECTION ===========
 async function startListening() {
   if (!callActive) return;
 
-  setOrbState('listening', 'Listening...', 'Speak now — I\'ll detect when you pause');
+  setOrbState('listening');
 
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -463,7 +467,7 @@ async function startListening() {
         // Speech detected
         speechDetected = true;
         silenceStart = null;
-        setOrbState('listening', 'Listening...', 'I hear you...');
+        setOrbState('listening');
       } else if (speechDetected) {
         // Silence after speech
         if (!silenceStart) {
@@ -475,7 +479,7 @@ async function startListening() {
         }
         const remaining = Math.max(0, silenceDuration - (Date.now() - silenceStart));
         if (remaining < 1500) {
-          setOrbState('listening', 'Listening...', 'Processing soon...');
+          setOrbState('thinking');
         }
       }
 
@@ -487,7 +491,7 @@ async function startListening() {
   } catch (err) {
     console.error('Mic error:', err);
     addMessage('ai', 'Could not access microphone. Please allow mic permission.');
-    setOrbState('idle', 'Mic unavailable', 'Check browser permissions');
+    setOrbState('idle');
   }
 }
 
@@ -508,7 +512,7 @@ async function processRecording() {
       // Stop all tracks
       mediaRecorder.stream.getTracks().forEach(t => t.stop());
 
-      setOrbState('thinking', 'Processing...', 'Transcribing & generating response');
+      setOrbState('thinking');
 
       // Send to conversation API
       const formData = new FormData();
@@ -535,7 +539,7 @@ async function processRecording() {
           conversationHistory.push({ role: 'assistant', content: data.ai_text });
 
           if (data.audio) {
-            setOrbState('speaking', 'AI is speaking...', 'Listen...');
+            setOrbState('speaking');
             await playBase64Audio(data.audio);
           }
 

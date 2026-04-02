@@ -6,6 +6,7 @@ import os
 import tempfile
 import json
 import traceback
+import re
 
 app = Flask(__name__, static_folder=".", static_url_path="")
 CORS(app)
@@ -201,7 +202,11 @@ def conversation():
             print(f"[CHAT ERROR] {chat_resp.status_code}: {chat_resp.text[:500]}")
             return jsonify({"success": False, "error": "AI could not generate a response. Please try again."}), 502
 
-        ai_text = chat_resp.json()["choices"][0]["message"]["content"]
+        raw_ai_text = chat_resp.json()["choices"][0]["message"]["content"]
+        ai_text = clean_ai_response(raw_ai_text)
+        if raw_ai_text != ai_text:
+            print(f"[CHAT CLEANED] Original: {raw_ai_text[:200]}")
+            print(f"[CHAT CLEANED] Cleaned:  {ai_text[:200]}")
     except Exception as e:
         print(f"[CHAT EXCEPTION] {traceback.format_exc()}")
         return jsonify({"success": False, "error": "AI service temporarily unavailable."}), 500
@@ -243,6 +248,36 @@ def conversation():
     })
 
 
+def clean_ai_response(text):
+    """Strip chain-of-thought reasoning that the model may leak into its response."""
+    # Remove common thinking patterns the model outputs
+    # Pattern: "Okay, the user said/sent..." or "The user is asking..." followed by reasoning
+    thinking_patterns = [
+        r'(?i)^(okay|ok|alright|so|hmm|let me think|thinking)[,.]?\s*(the user|the customer|they|he|she)\s+(said|sent|asked|is asking|wants|mentioned|spoke|speaks).*?(?:\.\s*)',
+        r'(?i)^(since|because|as)\s+(the|this|their|the user|the customer).*?(?:\.\s*)',
+        r'(?i)^(I need to|I should|I will|let me|I\'ll)\s+.*?(?:\.\s*)',
+        r'(?i)^(the response should|possible response|this is|here is my response)[:\s].*?(?:\.\s*)',
+        r'(?i)^(the customer\'s|the user\'s)\s+(selected |chosen )?language.*?(?:\.\s*)',
+    ]
+
+    cleaned = text.strip()
+    for pattern in thinking_patterns:
+        cleaned = re.sub(pattern, '', cleaned, count=1).strip()
+
+    # If after cleaning nothing useful remains, try to extract the last sentence
+    # which is usually the actual response
+    if not cleaned and text.strip():
+        sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+        # Take the last 1-2 sentences (the actual reply)
+        cleaned = ' '.join(sentences[-2:]) if len(sentences) > 1 else sentences[-1]
+
+    # Remove any <think>...</think> or similar tags some models use
+    cleaned = re.sub(r'<think>.*?</think>', '', cleaned, flags=re.DOTALL).strip()
+    cleaned = re.sub(r'<reasoning>.*?</reasoning>', '', cleaned, flags=re.DOTALL).strip()
+
+    return cleaned if cleaned else text.strip()
+
+
 def get_system_prompt(scenario, language_code="hi-IN"):
     lang_names = {
         "hi-IN": "Hindi",
@@ -256,11 +291,15 @@ def get_system_prompt(scenario, language_code="hi-IN"):
     }
     lang_name = lang_names.get(language_code, "Hindi")
 
-    base = f"""Keep responses concise — 1 to 2 sentences max, like a real phone call.
-IMPORTANT: The customer's selected language is {lang_name}. You MUST respond in {lang_name} only. Match the customer's language exactly.
-If the customer mixes languages (e.g. Hinglish), respond in the same mixed style but primarily in {lang_name}.
-Always be warm and natural. End with a short follow-up question to keep the conversation going.
-You have already greeted the customer, so do NOT greet again. Just respond to what they said."""
+    base = f"""CRITICAL RULES:
+- NEVER include your thinking, reasoning, or analysis in your response. Only output the direct reply to the customer.
+- Do NOT start with phrases like "Okay, the user said...", "Since the customer...", "I need to...", "The response should be..." etc.
+- Just respond naturally as if you are speaking on a phone call.
+- Keep responses concise — 1 to 2 sentences max, like a real phone call.
+- The customer's selected language is {lang_name}. You MUST respond in {lang_name} only. Match the customer's language exactly.
+- If the customer mixes languages (e.g. Hinglish), respond in the same mixed style but primarily in {lang_name}.
+- Always be warm and natural. End with a short follow-up question to keep the conversation going.
+- You have already greeted the customer, so do NOT greet again. Just respond to what they said."""
 
     prompts = {
         "banking": f"""You are a friendly AI customer service agent for a major Indian bank.
