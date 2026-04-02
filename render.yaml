@@ -3,7 +3,7 @@ services:
     name: ethinos-voice-demo
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn server:app --bind 0.0.0.0:$PORT
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
     envVars:
       - key: SARVAM_API_KEY
         value: sk_zqeef1nk_px9eIdVNTYv7woQrLtCKPUNm
