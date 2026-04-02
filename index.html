@@ -2,81 +2,127 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ethinos AI — Voice Demo (Powered by Sarvam AI)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Ethinos AI — Live Voice Demo</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f5f5;color:#1a1a1a;min-height:100vh}
-.header{background:#fff;border-bottom:1px solid #e0e0e0;padding:16px 32px;display:flex;align-items:center;justify-content:space-between}
-.header h1{font-size:18px;font-weight:700}
-.header span{font-size:12px;color:#888}
-.container{max-width:900px;margin:32px auto;padding:0 20px;display:grid;grid-template-columns:1fr 1fr;gap:24px}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh;overflow-x:hidden}
 
-/* Card */
-.card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:28px;display:flex;flex-direction:column}
-.card-icon{font-size:32px;margin-bottom:12px}
-.card h2{font-size:16px;font-weight:700;margin-bottom:4px}
-.card p{font-size:13px;color:#666;margin-bottom:20px;line-height:1.5}
+/* Header */
+.header{background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.06);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;backdrop-filter:blur(20px)}
+.header h1{font-size:16px;font-weight:700;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header span{font-size:11px;color:#666}
 
-/* TTS Section */
-.tts-textarea{width:100%;border:1px solid #ddd;border-radius:8px;padding:12px;font-size:13px;font-family:inherit;resize:vertical;min-height:100px;outline:none;transition:.2s}
-.tts-textarea:focus{border-color:#2563eb}
-.row{display:flex;gap:10px;margin-top:12px}
-.select-wrap{flex:1}
-.select-wrap label{font-size:11px;color:#888;display:block;margin-bottom:4px}
-.select-wrap select{width:100%;border:1px solid #ddd;border-radius:6px;padding:8px;font-size:12px;background:#fff;outline:none;cursor:pointer}
-.btn{border:none;border-radius:8px;padding:12px 24px;font-size:14px;font-weight:600;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:16px}
+/* Tab navigation */
+.tabs{display:flex;gap:0;background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.06);padding:0 16px}
+.tab{padding:12px 20px;font-size:13px;font-weight:600;color:#666;cursor:pointer;border-bottom:2px solid transparent;transition:.2s}
+.tab:hover{color:#aaa}
+.tab.active{color:#60a5fa;border-bottom-color:#60a5fa}
+
+/* Panels */
+.panel{display:none;max-width:600px;margin:0 auto;padding:20px}
+.panel.active{display:block}
+
+/* ====== LIVE CALL PANEL ====== */
+.call-setup{text-align:center;padding:30px 0}
+.call-setup h2{font-size:20px;font-weight:700;margin-bottom:6px}
+.call-setup p{font-size:13px;color:#888;margin-bottom:24px;line-height:1.6}
+
+.scenario-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.scenario-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;cursor:pointer;transition:.2s;text-align:left}
+.scenario-card:hover{border-color:rgba(96,165,250,0.3);background:rgba(96,165,250,0.05)}
+.scenario-card.selected{border-color:#60a5fa;background:rgba(96,165,250,0.1)}
+.scenario-card .icon{font-size:24px;margin-bottom:8px}
+.scenario-card .name{font-size:13px;font-weight:600;margin-bottom:2px}
+.scenario-card .desc{font-size:11px;color:#888}
+
+.config-row{display:flex;gap:10px;margin-bottom:20px}
+.config-item{flex:1}
+.config-item label{font-size:11px;color:#888;display:block;margin-bottom:4px}
+.config-item select{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px;color:#e0e0e0;font-size:13px;outline:none}
+.config-item select option{background:#1a1a2e;color:#e0e0e0}
+
+.start-call-btn{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;border-radius:50px;padding:16px 48px;font-size:16px;font-weight:700;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:10px}
+.start-call-btn:hover{transform:scale(1.03);box-shadow:0 4px 20px rgba(22,163,74,0.3)}
+
+/* Active call */
+.call-active{display:none}
+.call-active.show{display:block}
+.call-setup.hide{display:none}
+
+/* Chat messages */
+.chat-area{display:flex;flex-direction:column;gap:12px;min-height:300px;max-height:55vh;overflow-y:auto;padding:16px 0;scroll-behavior:smooth}
+.msg{max-width:85%;padding:12px 16px;border-radius:16px;font-size:14px;line-height:1.6;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.msg.ai{background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.15);border-radius:16px 16px 16px 4px;align-self:flex-start;color:#c0d8f8}
+.msg.user{background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.15);border-radius:16px 16px 4px 16px;align-self:flex-end;color:#d4c8f8}
+.msg .label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;opacity:.6}
+.msg.ai .label{color:#60a5fa}
+.msg.user .label{color:#a78bfa}
+
+/* Thinking indicator */
+.thinking{display:flex;align-items:center;gap:8px;padding:12px 16px;font-size:13px;color:#888}
+.thinking-dots{display:flex;gap:4px}
+.thinking-dots span{width:6px;height:6px;background:#60a5fa;border-radius:50%;animation:bounce .6s infinite alternate}
+.thinking-dots span:nth-child(2){animation-delay:.15s}
+.thinking-dots span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{to{opacity:.3;transform:translateY(-4px)}}
+
+/* Mic area */
+.mic-area{display:flex;align-items:center;gap:12px;padding:16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:16px;margin-top:16px}
+.mic-circle{width:56px;height:56px;border-radius:50%;border:2px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;transition:.2s;flex-shrink:0}
+.mic-circle:hover{border-color:#60a5fa;background:rgba(96,165,250,0.1)}
+.mic-circle.recording{border-color:#ef4444;background:rgba(239,68,68,0.15);animation:pulse-glow 1.5s infinite}
+@keyframes pulse-glow{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.3)}50%{box-shadow:0 0 0 12px rgba(239,68,68,0)}}
+.mic-info{flex:1}
+.mic-info .mic-label{font-size:14px;font-weight:600;margin-bottom:2px}
+.mic-info .mic-hint{font-size:11px;color:#888}
+
+.end-call-btn{background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.2);border-radius:50px;padding:10px 24px;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;margin-top:12px;width:100%}
+.end-call-btn:hover{background:rgba(239,68,68,0.25)}
+
+/* ====== TTS / STT PANELS ====== */
+.card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:24px;margin-bottom:16px}
+.card h2{font-size:15px;font-weight:700;margin-bottom:4px}
+.card p{font-size:12px;color:#888;margin-bottom:16px;line-height:1.5}
+
+textarea{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px;font-size:14px;font-family:inherit;color:#e0e0e0;resize:vertical;min-height:90px;outline:none;transition:.2s}
+textarea:focus{border-color:#60a5fa}
+
+.row{display:flex;gap:10px;margin-top:10px}
+.sel-wrap{flex:1}
+.sel-wrap label{font-size:11px;color:#888;display:block;margin-bottom:4px}
+.sel-wrap select{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px;color:#e0e0e0;font-size:12px;outline:none}
+.sel-wrap select option{background:#1a1a2e}
+
+.btn{border:none;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:600;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:14px;color:#fff}
 .btn:hover{transform:translateY(-1px)}
-.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.btn-blue{background:#2563eb;color:#fff}
-.btn-blue:hover:not(:disabled){background:#1d4ed8}
-.btn-red{background:#dc2626;color:#fff}
-.btn-red:hover:not(:disabled){background:#b91c1c}
-.btn-green{background:#16a34a;color:#fff}
-.btn-green:hover:not(:disabled){background:#15803d}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-blue{background:linear-gradient(135deg,#2563eb,#4f46e5)}
+.btn-red{background:linear-gradient(135deg,#dc2626,#b91c1c)}
 
-/* Audio player */
-.audio-box{margin-top:14px;display:none}
-.audio-box audio{width:100%;border-radius:8px}
+.audio-box{margin-top:12px;display:none}
 .audio-box.show{display:block}
+.audio-box audio{width:100%;border-radius:8px;height:40px}
 
-/* STT Section */
-.record-area{flex:1;display:flex;flex-direction:column;align-items:center;gap:16px}
-.mic-btn{width:80px;height:80px;border-radius:50%;border:3px solid #ddd;background:#fff;font-size:32px;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center}
-.mic-btn:hover{border-color:#dc2626;background:#fef2f2}
-.mic-btn.recording{border-color:#dc2626;background:#fef2f2;animation:pulse-rec 1.5s infinite}
-@keyframes pulse-rec{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.3)}50%{box-shadow:0 0 0 15px rgba(220,38,38,0)}}
-.mic-status{font-size:12px;color:#888;min-height:18px}
-.mic-status.active{color:#dc2626;font-weight:600}
-.lang-select{margin-top:4px}
-.lang-select label{font-size:11px;color:#888;margin-right:6px}
-.lang-select select{border:1px solid #ddd;border-radius:6px;padding:6px 10px;font-size:12px;outline:none}
-
-/* Transcript */
-.transcript-box{width:100%;margin-top:16px;min-height:120px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:14px;font-size:13px;line-height:1.7;color:#374151}
-.transcript-box .placeholder{color:#aaa;font-style:italic}
-.transcript-meta{margin-top:8px;font-size:11px;color:#888}
-.transcript-meta span{font-weight:600;color:#2563eb}
-
-/* Status */
-.status{margin-top:10px;padding:8px 12px;border-radius:6px;font-size:12px;display:none}
+.status{margin-top:8px;padding:8px 12px;border-radius:8px;font-size:12px;display:none}
 .status.show{display:block}
-.status.loading{background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe}
-.status.error{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
-.status.success{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.status.loading{background:rgba(96,165,250,0.1);color:#60a5fa;border:1px solid rgba(96,165,250,0.2)}
+.status.error{background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.2)}
+.status.success{background:rgba(22,163,74,0.1);color:#4ade80;border:1px solid rgba(22,163,74,0.2)}
 
-/* Footer */
-.footer{text-align:center;padding:24px;font-size:11px;color:#aaa}
-.footer a{color:#2563eb;text-decoration:none}
+.transcript-box{width:100%;margin-top:14px;min-height:80px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:14px;font-size:13px;line-height:1.7;color:#ccc}
+.transcript-box .placeholder{color:#555;font-style:italic}
 
+.footer{text-align:center;padding:20px;font-size:10px;color:#444}
+.footer a{color:#60a5fa;text-decoration:none}
+
+/* Mobile */
 @media(max-width:700px){
-  .container{grid-template-columns:1fr;padding:0 12px;margin:16px auto}
-  .header{padding:12px 16px}
-  .header h1{font-size:15px}
-  .card{padding:20px}
-  .tts-textarea{min-height:80px;font-size:14px}
-  .btn{padding:14px 24px;font-size:15px}
-  .mic-btn{width:90px;height:90px;font-size:36px}
+  .panel{padding:14px}
+  .scenario-grid{grid-template-columns:1fr 1fr}
+  .config-row{flex-direction:column;gap:8px}
+  .chat-area{max-height:45vh}
   .row{flex-direction:column;gap:8px}
 }
 </style>
@@ -84,38 +130,62 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f5f5;color:#1a1a1
 <body>
 
 <div class="header">
-  <h1>Ethinos AI — Voice Solutions Demo</h1>
-  <span>Powered by Sarvam AI APIs</span>
+  <h1>Ethinos AI — Voice Solutions</h1>
+  <span>Powered by Sarvam AI</span>
 </div>
 
-<div class="container">
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('live')">Live Call</div>
+  <div class="tab" onclick="switchTab('tts')">Text to Speech</div>
+  <div class="tab" onclick="switchTab('stt')">Speech to Text</div>
+</div>
 
-  <!-- LEFT: Text-to-Speech (Customer Service Voice) -->
-  <div class="card">
-    <div class="card-icon">📞</div>
-    <h2>AI Customer Service Voice</h2>
-    <p>Type what the AI agent should say, pick a voice and language, and hit "Speak". This is what your customers will hear when they call.</p>
+<!-- ============ LIVE CALL ============ -->
+<div class="panel active" id="panel-live">
 
-    <textarea class="tts-textarea" id="ttsText" placeholder="Type text here...">Namaste! Aapka Bajaj Finance mein swagat hai. Main aapki kaise madad kar sakti hoon? Agar aapko personal loan ke baare mein jaankari chahiye, toh main abhi aapko details de sakti hoon.</textarea>
+  <div class="call-setup" id="callSetup">
+    <h2>Live AI Call Simulation</h2>
+    <p>Pick a scenario, tap Start Call, and have a real voice conversation with an AI agent. It listens, thinks, and talks back.</p>
 
-    <div class="row">
-      <div class="select-wrap">
-        <label>Voice</label>
-        <select id="ttsSpeaker">
+    <div class="scenario-grid">
+      <div class="scenario-card selected" data-scenario="banking" onclick="selectScenario(this)">
+        <div class="icon">🏦</div>
+        <div class="name">Banking</div>
+        <div class="desc">Loans, accounts, cards</div>
+      </div>
+      <div class="scenario-card" data-scenario="insurance" onclick="selectScenario(this)">
+        <div class="icon">🛡️</div>
+        <div class="name">Insurance</div>
+        <div class="desc">Claims, policies, premiums</div>
+      </div>
+      <div class="scenario-card" data-scenario="ecommerce" onclick="selectScenario(this)">
+        <div class="icon">🛒</div>
+        <div class="name">E-Commerce</div>
+        <div class="desc">Orders, returns, delivery</div>
+      </div>
+      <div class="scenario-card" data-scenario="telecom" onclick="selectScenario(this)">
+        <div class="icon">📱</div>
+        <div class="name">Telecom</div>
+        <div class="desc">Plans, recharge, network</div>
+      </div>
+    </div>
+
+    <div class="config-row">
+      <div class="config-item">
+        <label>AI Voice</label>
+        <select id="callVoice">
+          <option value="meera">Meera (Female)</option>
+          <option value="priya">Priya (Female)</option>
+          <option value="shreya">Shreya (Female)</option>
+          <option value="kavya">Kavya (Female)</option>
           <option value="shubh">Shubh (Male)</option>
           <option value="advait">Advait (Male)</option>
-          <option value="amit">Amit (Male)</option>
           <option value="kabir">Kabir (Male)</option>
-          <option value="ritu">Ritu (Female)</option>
-          <option value="priya">Priya (Female)</option>
-          <option value="neha">Neha (Female)</option>
-          <option value="kavya">Kavya (Female)</option>
-          <option value="shreya">Shreya (Female)</option>
         </select>
       </div>
-      <div class="select-wrap">
+      <div class="config-item">
         <label>Language</label>
-        <select id="ttsLang">
+        <select id="callLang">
           <option value="hi-IN">Hindi</option>
           <option value="en-IN">English (Indian)</option>
           <option value="mr-IN">Marathi</option>
@@ -124,35 +194,71 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f5f5;color:#1a1a1
           <option value="bn-IN">Bengali</option>
           <option value="gu-IN">Gujarati</option>
           <option value="kn-IN">Kannada</option>
-          <option value="ml-IN">Malayalam</option>
-          <option value="pa-IN">Punjabi</option>
         </select>
       </div>
     </div>
 
-    <button class="btn btn-blue" id="ttsBtn" onclick="doTTS()">
-      🔊 Speak This
+    <button class="start-call-btn" onclick="startCall()">
+      📞 Start Call
     </button>
-
-    <div class="status" id="ttsStatus"></div>
-
-    <div class="audio-box" id="ttsAudio">
-      <audio id="ttsPlayer" controls></audio>
-    </div>
-
-    <div style="margin-top:16px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:11px;color:#64748b;line-height:1.6">
-      <strong>Demo tip:</strong> Try pasting an actual customer service script here — loan eligibility check, insurance claim status, payment reminder. Switch voices to find the best fit for each client brand.
-    </div>
   </div>
 
-  <!-- RIGHT: Speech-to-Text -->
-  <div class="card">
-    <div class="card-icon">🎙️</div>
-    <h2>Speech to Text — Hindi / English</h2>
-    <p>Click the mic, speak in Hindi or English (or mix both), and see the live transcription. Works with any Indian language.</p>
+  <div class="call-active" id="callActive">
+    <div class="chat-area" id="chatArea"></div>
 
-    <div class="record-area">
-      <div class="lang-select">
+    <div class="mic-area" id="micArea">
+      <div class="mic-circle" id="callMic" onclick="toggleCallRecording()">🎙️</div>
+      <div class="mic-info">
+        <div class="mic-label" id="micLabel">Tap to speak</div>
+        <div class="mic-hint" id="micHint">The AI will respond with voice after you're done</div>
+      </div>
+    </div>
+
+    <button class="end-call-btn" onclick="endCall()">End Call</button>
+  </div>
+</div>
+
+<!-- ============ TTS PANEL ============ -->
+<div class="panel" id="panel-tts">
+  <div class="card">
+    <h2>📞 AI Customer Service Voice</h2>
+    <p>Type what the AI agent should say, pick a voice and language, and hit Speak.</p>
+    <textarea id="ttsText" placeholder="Type text here...">Namaste! Aapka Bajaj Finance mein swagat hai. Main aapki kaise madad kar sakti hoon?</textarea>
+    <div class="row">
+      <div class="sel-wrap"><label>Voice</label>
+        <select id="ttsSpeaker">
+          <option value="meera">Meera (Female)</option>
+          <option value="priya">Priya (Female)</option>
+          <option value="shreya">Shreya (Female)</option>
+          <option value="shubh">Shubh (Male)</option>
+          <option value="advait">Advait (Male)</option>
+          <option value="kabir">Kabir (Male)</option>
+        </select>
+      </div>
+      <div class="sel-wrap"><label>Language</label>
+        <select id="ttsLang">
+          <option value="hi-IN">Hindi</option>
+          <option value="en-IN">English (Indian)</option>
+          <option value="mr-IN">Marathi</option>
+          <option value="ta-IN">Tamil</option>
+          <option value="te-IN">Telugu</option>
+          <option value="bn-IN">Bengali</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-blue" id="ttsBtn" onclick="doTTS()">🔊 Speak This</button>
+    <div class="status" id="ttsStatus"></div>
+    <div class="audio-box" id="ttsAudio"><audio id="ttsPlayer" controls></audio></div>
+  </div>
+</div>
+
+<!-- ============ STT PANEL ============ -->
+<div class="panel" id="panel-stt">
+  <div class="card">
+    <h2>🎙️ Speech to Text</h2>
+    <p>Click mic, speak in any Indian language, see transcription.</p>
+    <div style="text-align:center;padding:20px">
+      <div class="sel-wrap" style="max-width:200px;margin:0 auto 16px">
         <label>Transcribe in:</label>
         <select id="sttLang">
           <option value="hi-IN">Hindi</option>
@@ -161,59 +267,254 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f5f5;color:#1a1a1
           <option value="mr-IN">Marathi</option>
           <option value="ta-IN">Tamil</option>
           <option value="te-IN">Telugu</option>
-          <option value="bn-IN">Bengali</option>
-          <option value="gu-IN">Gujarati</option>
-          <option value="kn-IN">Kannada</option>
         </select>
       </div>
-
-      <button class="mic-btn" id="micBtn" onclick="toggleRecording()">🎙️</button>
-      <div class="mic-status" id="micStatus">Click mic to start recording</div>
+      <div class="mic-circle" id="sttMicBtn" onclick="toggleSttRecording()" style="margin:0 auto;width:70px;height:70px;font-size:28px">🎙️</div>
+      <div id="sttMicStatus" style="font-size:12px;color:#888;margin-top:10px">Click mic to start</div>
     </div>
-
-    <button class="btn btn-red" id="stopBtn" onclick="stopAndTranscribe()" style="display:none">
-      ⏹️ Stop & Transcribe
-    </button>
-
     <div class="status" id="sttStatus"></div>
-
-    <div class="transcript-box" id="transcriptBox">
-      <div class="placeholder">Your transcription will appear here...</div>
-    </div>
-    <div class="transcript-meta" id="transcriptMeta"></div>
-
-    <!-- Upload option -->
-    <div style="margin-top:16px;padding:12px;background:#f9fafb;border:1px dashed #d1d5db;border-radius:8px;text-align:center">
-      <div style="font-size:12px;color:#888;margin-bottom:8px">Or upload an audio file directly</div>
-      <input type="file" id="audioUpload" accept="audio/*,.wav,.mp3,.m4a,.ogg,.webm" style="font-size:12px" onchange="uploadAndTranscribe()">
-    </div>
-
-    <div style="margin-top:16px;padding:12px;background:#f0fdf4;border-radius:8px;font-size:11px;color:#64748b;line-height:1.6">
-      <strong>Demo tip:</strong> Speak in Hindi-English mixed (code-switching) — the API handles it naturally. Great for BFSI call center transcription where callers switch languages mid-sentence.
+    <div class="transcript-box" id="transcriptBox"><div class="placeholder">Your transcription will appear here...</div></div>
+    <div style="margin-top:14px;text-align:center">
+      <input type="file" id="audioUpload" accept="audio/*,.wav,.mp3,.m4a" style="font-size:12px;color:#888" onchange="uploadAndTranscribe()">
     </div>
   </div>
 </div>
 
 <div class="footer">
-  Built by <a href="#">Ethinos Digital Marketing</a> • Voice APIs by <a href="https://sarvam.ai" target="_blank">Sarvam AI</a>
+  Built by <a href="#">Ethinos Digital Marketing</a> · Voice APIs by <a href="https://sarvam.ai" target="_blank">Sarvam AI</a>
 </div>
 
 <script>
 const SERVER = window.location.origin;
+let currentScenario = 'banking';
+let conversationHistory = [];
+let callRecorder = null;
+let callChunks = [];
+let isCallRecording = false;
 
-// =========== TEXT TO SPEECH ===========
+// =========== TAB SWITCHING ===========
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.tab:nth-child(${tab==='live'?1:tab==='tts'?2:3})`).classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+}
+
+// =========== LIVE CALL ===========
+function selectScenario(el) {
+  document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  currentScenario = el.dataset.scenario;
+}
+
+async function startCall() {
+  conversationHistory = [];
+  document.getElementById('callSetup').classList.add('hide');
+  document.getElementById('callActive').classList.add('show');
+  document.getElementById('chatArea').innerHTML = '';
+
+  // AI greeting
+  const greetings = {
+    banking: "Namaste! Welcome to our banking helpline. How can I assist you today? You can ask about loans, accounts, or card services.",
+    insurance: "Hello! Thank you for calling our insurance support. How may I help you today? I can assist with claims, policies, or premium queries.",
+    ecommerce: "Hi there! Welcome to customer support. How can I help you today? I can help with orders, returns, or delivery updates.",
+    telecom: "Hello! Welcome to our telecom helpline. How can I assist you today? I can help with recharge plans, data packs, or billing queries."
+  };
+
+  const greeting = greetings[currentScenario];
+  addMessage('ai', greeting);
+  conversationHistory.push({role: 'assistant', content: greeting});
+
+  // Speak the greeting
+  await speakText(greeting);
+}
+
+function endCall() {
+  document.getElementById('callSetup').classList.remove('hide');
+  document.getElementById('callActive').classList.remove('show');
+  conversationHistory = [];
+  if (isCallRecording) stopCallRecording();
+}
+
+function addMessage(role, text) {
+  const chat = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  div.innerHTML = `<div class="label">${role === 'ai' ? 'AI Agent' : 'You'}</div>${text}`;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function showThinking() {
+  const chat = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = 'thinking';
+  div.id = 'thinkingIndicator';
+  div.innerHTML = '<div class="thinking-dots"><span></span><span></span><span></span></div> AI is thinking...';
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function hideThinking() {
+  const el = document.getElementById('thinkingIndicator');
+  if (el) el.remove();
+}
+
+async function toggleCallRecording() {
+  if (isCallRecording) {
+    await stopCallAndProcess();
+  } else {
+    await startCallRecording();
+  }
+}
+
+async function startCallRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
+    callRecorder = new MediaRecorder(stream, { mimeType });
+    callChunks = [];
+
+    callRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) callChunks.push(e.data);
+    };
+
+    callRecorder.start(250);
+    isCallRecording = true;
+
+    document.getElementById('callMic').classList.add('recording');
+    document.getElementById('callMic').innerHTML = '⏹️';
+    document.getElementById('micLabel').textContent = 'Recording... tap to send';
+    document.getElementById('micHint').textContent = 'Speak your message, then tap the button to send';
+  } catch (err) {
+    addMessage('ai', 'Could not access microphone. Please allow mic permission and try again.');
+  }
+}
+
+function stopCallRecording() {
+  if (callRecorder && callRecorder.state !== 'inactive') {
+    callRecorder.stop();
+    callRecorder.stream.getTracks().forEach(t => t.stop());
+  }
+  isCallRecording = false;
+  document.getElementById('callMic').classList.remove('recording');
+  document.getElementById('callMic').innerHTML = '🎙️';
+  document.getElementById('micLabel').textContent = 'Tap to speak';
+  document.getElementById('micHint').textContent = 'The AI will respond with voice after you\'re done';
+}
+
+async function stopCallAndProcess() {
+  return new Promise((resolve) => {
+    callRecorder.onstop = async () => {
+      isCallRecording = false;
+      document.getElementById('callMic').classList.remove('recording');
+      document.getElementById('callMic').innerHTML = '🎙️';
+      document.getElementById('micLabel').textContent = 'Processing...';
+      document.getElementById('micHint').textContent = 'Transcribing your speech and generating response...';
+
+      const audioBlob = new Blob(callChunks, { type: callRecorder.mimeType });
+      callRecorder.stream.getTracks().forEach(t => t.stop());
+
+      // Disable mic while processing
+      document.getElementById('callMic').style.pointerEvents = 'none';
+      document.getElementById('callMic').style.opacity = '0.4';
+
+      showThinking();
+
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'recording.wav');
+      formData.append('language', document.getElementById('callLang').value);
+      formData.append('scenario', currentScenario);
+      formData.append('speaker', document.getElementById('callVoice').value);
+      formData.append('history', JSON.stringify(conversationHistory));
+
+      try {
+        const resp = await fetch(SERVER + '/api/conversation', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await resp.json();
+        hideThinking();
+
+        if (data.success) {
+          addMessage('user', data.user_text);
+          conversationHistory.push({role: 'user', content: data.user_text});
+
+          addMessage('ai', data.ai_text);
+          conversationHistory.push({role: 'assistant', content: data.ai_text});
+
+          if (data.audio) {
+            await playBase64Audio(data.audio);
+          }
+        } else {
+          addMessage('ai', 'Sorry, I couldn\'t catch that. Could you try again? (' + (data.error || 'Unknown error') + ')');
+        }
+      } catch (err) {
+        hideThinking();
+        addMessage('ai', 'Connection error. Please check your internet and try again.');
+      }
+
+      // Re-enable mic
+      document.getElementById('callMic').style.pointerEvents = 'auto';
+      document.getElementById('callMic').style.opacity = '1';
+      document.getElementById('micLabel').textContent = 'Tap to speak';
+      document.getElementById('micHint').textContent = 'Continue the conversation...';
+
+      resolve();
+    };
+
+    callRecorder.stop();
+  });
+}
+
+async function speakText(text) {
+  try {
+    const resp = await fetch(SERVER + '/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: text,
+        language: document.getElementById('callLang').value,
+        speaker: document.getElementById('callVoice').value,
+      }),
+    });
+    const data = await resp.json();
+    if (data.success && data.audio) {
+      await playBase64Audio(data.audio);
+    }
+  } catch (err) {
+    console.error('TTS error:', err);
+  }
+}
+
+function playBase64Audio(base64) {
+  return new Promise((resolve) => {
+    const audioBytes = atob(base64);
+    const byteArray = new Uint8Array(audioBytes.length);
+    for (let i = 0; i < audioBytes.length; i++) {
+      byteArray[i] = audioBytes.charCodeAt(i);
+    }
+    const blob = new Blob([byteArray], { type: 'audio/wav' });
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audio.onended = resolve;
+    audio.onerror = resolve;
+    audio.play().catch(resolve);
+  });
+}
+
+// =========== TTS ===========
 async function doTTS() {
   const text = document.getElementById('ttsText').value.trim();
   if (!text) return;
-
   const btn = document.getElementById('ttsBtn');
   const status = document.getElementById('ttsStatus');
   const audioBox = document.getElementById('ttsAudio');
   const player = document.getElementById('ttsPlayer');
 
   btn.disabled = true;
-  btn.innerHTML = '⏳ Generating voice...';
-  showStatus(status, 'loading', 'Calling Sarvam AI Text-to-Speech API...');
+  btn.innerHTML = '⏳ Generating...';
+  showStatus(status, 'loading', 'Calling Sarvam AI TTS...');
   audioBox.classList.remove('show');
 
   try {
@@ -221,150 +522,96 @@ async function doTTS() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        text: text,
-        language: document.getElementById('ttsLang').value,
+        text, language: document.getElementById('ttsLang').value,
         speaker: document.getElementById('ttsSpeaker').value,
       }),
     });
-
     const data = await resp.json();
-
     if (data.success && data.audio) {
-      // Convert base64 to audio blob and play
       const audioBytes = atob(data.audio);
       const byteArray = new Uint8Array(audioBytes.length);
-      for (let i = 0; i < audioBytes.length; i++) {
-        byteArray[i] = audioBytes.charCodeAt(i);
-      }
-      const blob = new Blob([byteArray], { type: 'audio/wav' });
-      const url = URL.createObjectURL(blob);
-
-      player.src = url;
+      for (let i = 0; i < audioBytes.length; i++) byteArray[i] = audioBytes.charCodeAt(i);
+      player.src = URL.createObjectURL(new Blob([byteArray], { type: 'audio/wav' }));
       audioBox.classList.add('show');
       player.play();
-
-      showStatus(status, 'success', '✅ Voice generated! Playing audio.');
+      showStatus(status, 'success', 'Voice generated!');
     } else {
-      showStatus(status, 'error', '❌ Error: ' + (data.error || 'Unknown error'));
+      showStatus(status, 'error', 'Error: ' + (data.error || 'Unknown'));
     }
   } catch (err) {
-    showStatus(status, 'error', '❌ Connection error: ' + err.message + '. Is the server running?');
+    showStatus(status, 'error', 'Connection error: ' + err.message);
   }
-
   btn.disabled = false;
   btn.innerHTML = '🔊 Speak This';
 }
 
-// =========== SPEECH TO TEXT ===========
-let mediaRecorder = null;
-let audioChunks = [];
-let isRecording = false;
+// =========== STT ===========
+let sttRecorder = null, sttChunks = [], isSttRecording = false;
 
-async function toggleRecording() {
-  if (isRecording) {
-    stopAndTranscribe();
-    return;
-  }
-
+async function toggleSttRecording() {
+  if (isSttRecording) { stopSttAndTranscribe(); return; }
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    // Try webm first, fall back to wav
-    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-      ? 'audio/webm;codecs=opus'
-      : 'audio/webm';
-
-    mediaRecorder = new MediaRecorder(stream, { mimeType });
-    audioChunks = [];
-
-    mediaRecorder.ondataavailable = (e) => {
-      if (e.data.size > 0) audioChunks.push(e.data);
-    };
-
-    mediaRecorder.start(250); // collect chunks every 250ms
-    isRecording = true;
-
-    document.getElementById('micBtn').classList.add('recording');
-    document.getElementById('micBtn').innerHTML = '⏹️';
-    document.getElementById('micStatus').textContent = 'Recording... speak now';
-    document.getElementById('micStatus').classList.add('active');
-    document.getElementById('stopBtn').style.display = 'flex';
-    document.getElementById('transcriptBox').innerHTML = '<div class="placeholder">Listening...</div>';
-
+    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
+    sttRecorder = new MediaRecorder(stream, { mimeType });
+    sttChunks = [];
+    sttRecorder.ondataavailable = (e) => { if (e.data.size > 0) sttChunks.push(e.data); };
+    sttRecorder.start(250);
+    isSttRecording = true;
+    document.getElementById('sttMicBtn').classList.add('recording');
+    document.getElementById('sttMicBtn').innerHTML = '⏹️';
+    document.getElementById('sttMicStatus').textContent = 'Recording... tap to stop';
   } catch (err) {
-    showStatus(document.getElementById('sttStatus'), 'error',
-      '❌ Microphone access denied. Please allow mic access and try again.');
+    showStatus(document.getElementById('sttStatus'), 'error', 'Mic access denied.');
   }
 }
 
-async function stopAndTranscribe() {
-  if (!mediaRecorder || !isRecording) return;
-
+async function stopSttAndTranscribe() {
+  if (!sttRecorder) return;
   return new Promise((resolve) => {
-    mediaRecorder.onstop = async () => {
-      isRecording = false;
-      document.getElementById('micBtn').classList.remove('recording');
-      document.getElementById('micBtn').innerHTML = '🎙️';
-      document.getElementById('micStatus').textContent = 'Processing...';
-      document.getElementById('micStatus').classList.remove('active');
-      document.getElementById('stopBtn').style.display = 'none';
-
-      const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
-
-      // Stop all tracks
-      mediaRecorder.stream.getTracks().forEach(t => t.stop());
-
-      await sendAudioForTranscription(audioBlob);
+    sttRecorder.onstop = async () => {
+      isSttRecording = false;
+      document.getElementById('sttMicBtn').classList.remove('recording');
+      document.getElementById('sttMicBtn').innerHTML = '🎙️';
+      document.getElementById('sttMicStatus').textContent = 'Processing...';
+      const blob = new Blob(sttChunks, { type: sttRecorder.mimeType });
+      sttRecorder.stream.getTracks().forEach(t => t.stop());
+      await sendSttAudio(blob);
       resolve();
     };
-
-    mediaRecorder.stop();
+    sttRecorder.stop();
   });
 }
 
 async function uploadAndTranscribe() {
   const file = document.getElementById('audioUpload').files[0];
-  if (!file) return;
-  await sendAudioForTranscription(file);
+  if (file) await sendSttAudio(file);
 }
 
-async function sendAudioForTranscription(audioBlob) {
+async function sendSttAudio(blob) {
   const status = document.getElementById('sttStatus');
-  const transcriptBox = document.getElementById('transcriptBox');
-  const meta = document.getElementById('transcriptMeta');
-
-  showStatus(status, 'loading', 'Sending audio to Sarvam AI Speech-to-Text API...');
-  transcriptBox.innerHTML = '<div class="placeholder">Transcribing...</div>';
-  meta.innerHTML = '';
-
-  const formData = new FormData();
-  formData.append('audio', audioBlob, 'recording.wav');
-  formData.append('language', document.getElementById('sttLang').value);
-
+  const box = document.getElementById('transcriptBox');
+  showStatus(status, 'loading', 'Transcribing...');
+  box.innerHTML = '<div class="placeholder">Transcribing...</div>';
+  const fd = new FormData();
+  fd.append('audio', blob, 'recording.wav');
+  fd.append('language', document.getElementById('sttLang').value);
   try {
-    const resp = await fetch(SERVER + '/api/stt', {
-      method: 'POST',
-      body: formData,
-    });
-
+    const resp = await fetch(SERVER + '/api/stt', { method: 'POST', body: fd });
     const data = await resp.json();
-
     if (data.success && data.transcript) {
-      transcriptBox.innerHTML = data.transcript;
-      const conf = data.confidence ? (data.confidence * 100).toFixed(1) : 'N/A';
-      meta.innerHTML = `Language detected: <span>${data.language || 'N/A'}</span> &nbsp;|&nbsp; Confidence: <span>${conf}%</span>`;
-      showStatus(status, 'success', '✅ Transcription complete!');
+      box.innerHTML = data.transcript;
+      showStatus(status, 'success', 'Transcription complete!');
     } else {
-      transcriptBox.innerHTML = '<div class="placeholder" style="color:#dc2626">Transcription failed. Try again.</div>';
-      showStatus(status, 'error', '❌ Error: ' + (data.error || 'Unknown error'));
+      box.innerHTML = '<div class="placeholder" style="color:#ef4444">Failed. Try again.</div>';
+      showStatus(status, 'error', data.error || 'Unknown error');
     }
   } catch (err) {
-    showStatus(status, 'error', '❌ Connection error: ' + err.message + '. Is the server running?');
+    showStatus(status, 'error', 'Connection error: ' + err.message);
   }
-
-  document.getElementById('micStatus').textContent = 'Click mic to start recording';
+  document.getElementById('sttMicStatus').textContent = 'Click mic to start';
 }
 
-// =========== HELPERS ===========
 function showStatus(el, type, msg) {
   el.className = 'status show ' + type;
   el.textContent = msg;
