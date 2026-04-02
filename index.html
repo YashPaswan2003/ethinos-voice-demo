@@ -8,25 +8,23 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh;overflow-x:hidden}
 
-/* Header */
 .header{background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.06);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;backdrop-filter:blur(20px)}
 .header h1{font-size:16px;font-weight:700;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .header span{font-size:11px;color:#666}
 
-/* Tab navigation */
 .tabs{display:flex;gap:0;background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.06);padding:0 16px}
 .tab{padding:12px 20px;font-size:13px;font-weight:600;color:#666;cursor:pointer;border-bottom:2px solid transparent;transition:.2s}
 .tab:hover{color:#aaa}
 .tab.active{color:#60a5fa;border-bottom-color:#60a5fa}
 
-/* Panels */
 .panel{display:none;max-width:600px;margin:0 auto;padding:20px}
-.panel.active{display:block}
+.panel.active{display:flex;flex-direction:column;height:calc(100vh - 100px)}
 
-/* ====== LIVE CALL PANEL ====== */
-.call-setup{text-align:center;padding:30px 0}
+/* ====== CALL SETUP ====== */
+.call-setup{text-align:center;padding:24px 0;overflow-y:auto;flex:1}
 .call-setup h2{font-size:20px;font-weight:700;margin-bottom:6px}
 .call-setup p{font-size:13px;color:#888;margin-bottom:24px;line-height:1.6}
+.call-setup.hide{display:none}
 
 .scenario-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
 .scenario-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;cursor:pointer;transition:.2s;text-align:left}
@@ -45,13 +43,12 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a0
 .start-call-btn{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;border-radius:50px;padding:16px 48px;font-size:16px;font-weight:700;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:10px}
 .start-call-btn:hover{transform:scale(1.03);box-shadow:0 4px 20px rgba(22,163,74,0.3)}
 
-/* Active call */
-.call-active{display:none}
-.call-active.show{display:block}
-.call-setup.hide{display:none}
+/* ====== ACTIVE CALL ====== */
+.call-active{display:none;flex-direction:column;flex:1;min-height:0}
+.call-active.show{display:flex}
 
 /* Chat messages */
-.chat-area{display:flex;flex-direction:column;gap:12px;min-height:300px;max-height:55vh;overflow-y:auto;padding:16px 0;scroll-behavior:smooth}
+.chat-area{flex:1;display:flex;flex-direction:column;gap:12px;overflow-y:auto;padding:12px 0;scroll-behavior:smooth;min-height:0}
 .msg{max-width:85%;padding:12px 16px;border-radius:16px;font-size:14px;line-height:1.6;animation:fadeIn .3s ease}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .msg.ai{background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.15);border-radius:16px 16px 16px 4px;align-self:flex-start;color:#c0d8f8}
@@ -60,28 +57,40 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a0
 .msg.ai .label{color:#60a5fa}
 .msg.user .label{color:#a78bfa}
 
-/* Thinking indicator */
-.thinking{display:flex;align-items:center;gap:8px;padding:12px 16px;font-size:13px;color:#888}
-.thinking-dots{display:flex;gap:4px}
-.thinking-dots span{width:6px;height:6px;background:#60a5fa;border-radius:50%;animation:bounce .6s infinite alternate}
-.thinking-dots span:nth-child(2){animation-delay:.15s}
-.thinking-dots span:nth-child(3){animation-delay:.3s}
-@keyframes bounce{to{opacity:.3;transform:translateY(-4px)}}
+/* Status bar at bottom */
+.call-status-bar{padding:16px;text-align:center;flex-shrink:0}
 
-/* Mic area */
-.mic-area{display:flex;align-items:center;gap:12px;padding:16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:16px;margin-top:16px}
-.mic-circle{width:56px;height:56px;border-radius:50%;border:2px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;transition:.2s;flex-shrink:0}
-.mic-circle:hover{border-color:#60a5fa;background:rgba(96,165,250,0.1)}
-.mic-circle.recording{border-color:#ef4444;background:rgba(239,68,68,0.15);animation:pulse-glow 1.5s infinite}
-@keyframes pulse-glow{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.3)}50%{box-shadow:0 0 0 12px rgba(239,68,68,0)}}
-.mic-info{flex:1}
-.mic-info .mic-label{font-size:14px;font-weight:600;margin-bottom:2px}
-.mic-info .mic-hint{font-size:11px;color:#888}
+/* Pulsing orb */
+.orb-container{display:flex;flex-direction:column;align-items:center;gap:12px}
+.orb{width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;transition:.3s;position:relative}
+.orb.listening{background:rgba(96,165,250,0.15);border:2px solid rgba(96,165,250,0.4);animation:orb-pulse-listen 2s infinite}
+.orb.speaking{background:rgba(167,139,250,0.15);border:2px solid rgba(167,139,250,0.4);animation:orb-pulse-speak 1s infinite}
+.orb.thinking{background:rgba(250,204,21,0.1);border:2px solid rgba(250,204,21,0.3);animation:orb-pulse-think 1.2s infinite}
+.orb.idle{background:rgba(255,255,255,0.05);border:2px solid rgba(255,255,255,0.1)}
 
-.end-call-btn{background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.2);border-radius:50px;padding:10px 24px;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;margin-top:12px;width:100%}
+@keyframes orb-pulse-listen{
+  0%,100%{box-shadow:0 0 0 0 rgba(96,165,250,0.3)}
+  50%{box-shadow:0 0 0 18px rgba(96,165,250,0)}
+}
+@keyframes orb-pulse-speak{
+  0%,100%{box-shadow:0 0 0 0 rgba(167,139,250,0.3)}
+  50%{box-shadow:0 0 0 14px rgba(167,139,250,0)}
+}
+@keyframes orb-pulse-think{
+  0%,100%{box-shadow:0 0 0 0 rgba(250,204,21,0.2)}
+  50%{box-shadow:0 0 0 12px rgba(250,204,21,0)}
+}
+
+.orb-label{font-size:13px;font-weight:600;color:#aaa}
+.orb-hint{font-size:11px;color:#666;margin-top:2px}
+
+.end-call-btn{background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.2);border-radius:50px;padding:10px 24px;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;margin-top:14px}
 .end-call-btn:hover{background:rgba(239,68,68,0.25)}
 
 /* ====== TTS / STT PANELS ====== */
+#panel-tts,#panel-stt{display:none;overflow-y:auto}
+#panel-tts.active,#panel-stt.active{display:block}
+
 .card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:24px;margin-bottom:16px}
 .card h2{font-size:15px;font-weight:700;margin-bottom:4px}
 .card p{font-size:12px;color:#888;margin-bottom:16px;line-height:1.5}
@@ -99,7 +108,6 @@ textarea:focus{border-color:#60a5fa}
 .btn:hover{transform:translateY(-1px)}
 .btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
 .btn-blue{background:linear-gradient(135deg,#2563eb,#4f46e5)}
-.btn-red{background:linear-gradient(135deg,#dc2626,#b91c1c)}
 
 .audio-box{margin-top:12px;display:none}
 .audio-box.show{display:block}
@@ -114,16 +122,15 @@ textarea:focus{border-color:#60a5fa}
 .transcript-box{width:100%;margin-top:14px;min-height:80px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:14px;font-size:13px;line-height:1.7;color:#ccc}
 .transcript-box .placeholder{color:#555;font-style:italic}
 
-.footer{text-align:center;padding:20px;font-size:10px;color:#444}
+.footer{text-align:center;padding:20px;font-size:10px;color:#444;flex-shrink:0}
 .footer a{color:#60a5fa;text-decoration:none}
 
-/* Mobile */
 @media(max-width:700px){
   .panel{padding:14px}
   .scenario-grid{grid-template-columns:1fr 1fr}
   .config-row{flex-direction:column;gap:8px}
-  .chat-area{max-height:45vh}
   .row{flex-direction:column;gap:8px}
+  .orb{width:70px;height:70px;font-size:28px}
 }
 </style>
 </head>
@@ -142,31 +149,22 @@ textarea:focus{border-color:#60a5fa}
 
 <!-- ============ LIVE CALL ============ -->
 <div class="panel active" id="panel-live">
-
   <div class="call-setup" id="callSetup">
     <h2>Live AI Call Simulation</h2>
-    <p>Pick a scenario, tap Start Call, and have a real voice conversation with an AI agent. It listens, thinks, and talks back.</p>
+    <p>Pick a scenario, tap Start, and have a hands-free voice conversation. The AI listens, thinks, and talks back — no buttons during the call.</p>
 
     <div class="scenario-grid">
       <div class="scenario-card selected" data-scenario="banking" onclick="selectScenario(this)">
-        <div class="icon">🏦</div>
-        <div class="name">Banking</div>
-        <div class="desc">Loans, accounts, cards</div>
+        <div class="icon">🏦</div><div class="name">Banking</div><div class="desc">Loans, accounts, cards</div>
       </div>
       <div class="scenario-card" data-scenario="insurance" onclick="selectScenario(this)">
-        <div class="icon">🛡️</div>
-        <div class="name">Insurance</div>
-        <div class="desc">Claims, policies, premiums</div>
+        <div class="icon">🛡️</div><div class="name">Insurance</div><div class="desc">Claims, policies, premiums</div>
       </div>
       <div class="scenario-card" data-scenario="ecommerce" onclick="selectScenario(this)">
-        <div class="icon">🛒</div>
-        <div class="name">E-Commerce</div>
-        <div class="desc">Orders, returns, delivery</div>
+        <div class="icon">🛒</div><div class="name">E-Commerce</div><div class="desc">Orders, returns, delivery</div>
       </div>
       <div class="scenario-card" data-scenario="telecom" onclick="selectScenario(this)">
-        <div class="icon">📱</div>
-        <div class="name">Telecom</div>
-        <div class="desc">Plans, recharge, network</div>
+        <div class="icon">📱</div><div class="name">Telecom</div><div class="desc">Plans, recharge, network</div>
       </div>
     </div>
 
@@ -177,7 +175,6 @@ textarea:focus{border-color:#60a5fa}
           <option value="meera">Meera (Female)</option>
           <option value="priya">Priya (Female)</option>
           <option value="shreya">Shreya (Female)</option>
-          <option value="kavya">Kavya (Female)</option>
           <option value="shubh">Shubh (Male)</option>
           <option value="advait">Advait (Male)</option>
           <option value="kabir">Kabir (Male)</option>
@@ -198,23 +195,20 @@ textarea:focus{border-color:#60a5fa}
       </div>
     </div>
 
-    <button class="start-call-btn" onclick="startCall()">
-      📞 Start Call
-    </button>
+    <button class="start-call-btn" onclick="startCall()">📞 Start Call</button>
   </div>
 
   <div class="call-active" id="callActive">
     <div class="chat-area" id="chatArea"></div>
 
-    <div class="mic-area" id="micArea">
-      <div class="mic-circle" id="callMic" onclick="toggleCallRecording()">🎙️</div>
-      <div class="mic-info">
-        <div class="mic-label" id="micLabel">Tap to speak</div>
-        <div class="mic-hint" id="micHint">The AI will respond with voice after you're done</div>
+    <div class="call-status-bar">
+      <div class="orb-container">
+        <div class="orb idle" id="orb">🎙️</div>
+        <div class="orb-label" id="orbLabel">Ready</div>
+        <div class="orb-hint" id="orbHint"></div>
       </div>
+      <button class="end-call-btn" onclick="endCall()">End Call</button>
     </div>
-
-    <button class="end-call-btn" onclick="endCall()">End Call</button>
   </div>
 </div>
 
@@ -229,10 +223,8 @@ textarea:focus{border-color:#60a5fa}
         <select id="ttsSpeaker">
           <option value="meera">Meera (Female)</option>
           <option value="priya">Priya (Female)</option>
-          <option value="shreya">Shreya (Female)</option>
           <option value="shubh">Shubh (Male)</option>
           <option value="advait">Advait (Male)</option>
-          <option value="kabir">Kabir (Male)</option>
         </select>
       </div>
       <div class="sel-wrap"><label>Language</label>
@@ -242,7 +234,6 @@ textarea:focus{border-color:#60a5fa}
           <option value="mr-IN">Marathi</option>
           <option value="ta-IN">Tamil</option>
           <option value="te-IN">Telugu</option>
-          <option value="bn-IN">Bengali</option>
         </select>
       </div>
     </div>
@@ -264,12 +255,9 @@ textarea:focus{border-color:#60a5fa}
           <option value="hi-IN">Hindi</option>
           <option value="en-IN">English</option>
           <option value="unknown">Auto-detect</option>
-          <option value="mr-IN">Marathi</option>
-          <option value="ta-IN">Tamil</option>
-          <option value="te-IN">Telugu</option>
         </select>
       </div>
-      <div class="mic-circle" id="sttMicBtn" onclick="toggleSttRecording()" style="margin:0 auto;width:70px;height:70px;font-size:28px">🎙️</div>
+      <div class="orb listening" id="sttMicBtn" onclick="toggleSttRecording()" style="margin:0 auto;width:70px;height:70px;font-size:28px;cursor:pointer;animation:none;background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.1)">🎙️</div>
       <div id="sttMicStatus" style="font-size:12px;color:#888;margin-top:10px">Click mic to start</div>
     </div>
     <div class="status" id="sttStatus"></div>
@@ -286,18 +274,29 @@ textarea:focus{border-color:#60a5fa}
 
 <script>
 const SERVER = window.location.origin;
+
+// =========== STATE ===========
 let currentScenario = 'banking';
-let conversationHistory = [];
-let callRecorder = null;
-let callChunks = [];
-let isCallRecording = false;
+let conversationHistory = []; // only user/assistant turns (no greeting)
+let callActive = false;
+
+// Recording state
+let mediaRecorder = null;
+let audioChunks = [];
+let audioContext = null;
+let analyser = null;
+let silenceTimer = null;
+let isRecording = false;
+let silenceThreshold = 0.015; // adjusted for sensitivity
+let silenceDuration = 2000; // ms of silence before auto-stop
 
 // =========== TAB SWITCHING ===========
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelector(`.tab:nth-child(${tab==='live'?1:tab==='tts'?2:3})`).classList.add('active');
-  document.getElementById('panel-'+tab).classList.add('active');
+  const idx = tab === 'live' ? 0 : tab === 'tts' ? 1 : 2;
+  document.querySelectorAll('.tab')[idx].classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('active');
 }
 
 // =========== LIVE CALL ===========
@@ -309,31 +308,39 @@ function selectScenario(el) {
 
 async function startCall() {
   conversationHistory = [];
+  callActive = true;
+
   document.getElementById('callSetup').classList.add('hide');
   document.getElementById('callActive').classList.add('show');
   document.getElementById('chatArea').innerHTML = '';
 
-  // AI greeting
   const greetings = {
-    banking: "Namaste! Welcome to our banking helpline. How can I assist you today? You can ask about loans, accounts, or card services.",
-    insurance: "Hello! Thank you for calling our insurance support. How may I help you today? I can assist with claims, policies, or premium queries.",
-    ecommerce: "Hi there! Welcome to customer support. How can I help you today? I can help with orders, returns, or delivery updates.",
-    telecom: "Hello! Welcome to our telecom helpline. How can I assist you today? I can help with recharge plans, data packs, or billing queries."
+    banking: "Namaste! Welcome to our banking helpline. How can I assist you today?",
+    insurance: "Hello! Thank you for calling our insurance support. How may I help you?",
+    ecommerce: "Hi there! Welcome to customer support. How can I help you today?",
+    telecom: "Hello! Welcome to our telecom helpline. How can I assist you?"
   };
 
   const greeting = greetings[currentScenario];
   addMessage('ai', greeting);
-  conversationHistory.push({role: 'assistant', content: greeting});
+  // NOTE: greeting NOT added to conversationHistory — to satisfy API ordering
 
-  // Speak the greeting
+  setOrbState('speaking', 'AI is speaking...', 'Listen to the greeting');
   await speakText(greeting);
+
+  // After greeting finishes, start listening automatically
+  if (callActive) {
+    startListening();
+  }
 }
 
 function endCall() {
+  callActive = false;
+  stopListeningCleanup();
   document.getElementById('callSetup').classList.remove('hide');
   document.getElementById('callActive').classList.remove('show');
   conversationHistory = [];
-  if (isCallRecording) stopCallRecording();
+  setOrbState('idle', 'Ready', '');
 }
 
 function addMessage(role, text) {
@@ -345,82 +352,114 @@ function addMessage(role, text) {
   chat.scrollTop = chat.scrollHeight;
 }
 
-function showThinking() {
-  const chat = document.getElementById('chatArea');
-  const div = document.createElement('div');
-  div.className = 'thinking';
-  div.id = 'thinkingIndicator';
-  div.innerHTML = '<div class="thinking-dots"><span></span><span></span><span></span></div> AI is thinking...';
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
+function setOrbState(state, label, hint) {
+  const orb = document.getElementById('orb');
+  orb.className = 'orb ' + state;
+  orb.innerHTML = state === 'listening' ? '🎙️' : state === 'speaking' ? '🔊' : state === 'thinking' ? '🧠' : '🎙️';
+  document.getElementById('orbLabel').textContent = label || '';
+  document.getElementById('orbHint').textContent = hint || '';
 }
 
-function hideThinking() {
-  const el = document.getElementById('thinkingIndicator');
-  if (el) el.remove();
-}
+// =========== AUTO-LISTENING WITH SILENCE DETECTION ===========
+async function startListening() {
+  if (!callActive) return;
 
-async function toggleCallRecording() {
-  if (isCallRecording) {
-    await stopCallAndProcess();
-  } else {
-    await startCallRecording();
-  }
-}
+  setOrbState('listening', 'Listening...', 'Speak now — I\'ll detect when you pause');
 
-async function startCallRecording() {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
-    callRecorder = new MediaRecorder(stream, { mimeType });
-    callChunks = [];
 
-    callRecorder.ondataavailable = (e) => {
-      if (e.data.size > 0) callChunks.push(e.data);
+    // Set up audio analysis for silence detection
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const source = audioContext.createMediaStreamSource(stream);
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 512;
+    source.connect(analyser);
+
+    // Set up recorder
+    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+      ? 'audio/webm;codecs=opus' : 'audio/webm';
+    mediaRecorder = new MediaRecorder(stream, { mimeType });
+    audioChunks = [];
+
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) audioChunks.push(e.data);
     };
 
-    callRecorder.start(250);
-    isCallRecording = true;
+    mediaRecorder.start(250);
+    isRecording = true;
 
-    document.getElementById('callMic').classList.add('recording');
-    document.getElementById('callMic').innerHTML = '⏹️';
-    document.getElementById('micLabel').textContent = 'Recording... tap to send';
-    document.getElementById('micHint').textContent = 'Speak your message, then tap the button to send';
+    // Start monitoring for silence
+    let speechDetected = false;
+    let silenceStart = null;
+
+    const dataArray = new Uint8Array(analyser.fftSize);
+
+    function checkAudioLevel() {
+      if (!isRecording || !callActive) return;
+
+      analyser.getByteTimeDomainData(dataArray);
+
+      // Calculate RMS volume
+      let sum = 0;
+      for (let i = 0; i < dataArray.length; i++) {
+        const val = (dataArray[i] - 128) / 128;
+        sum += val * val;
+      }
+      const rms = Math.sqrt(sum / dataArray.length);
+
+      if (rms > silenceThreshold) {
+        // Speech detected
+        speechDetected = true;
+        silenceStart = null;
+        setOrbState('listening', 'Listening...', 'I hear you...');
+      } else if (speechDetected) {
+        // Silence after speech
+        if (!silenceStart) {
+          silenceStart = Date.now();
+        } else if (Date.now() - silenceStart > silenceDuration) {
+          // Silence long enough — process the audio
+          processRecording();
+          return; // stop the loop
+        }
+        const remaining = Math.max(0, silenceDuration - (Date.now() - silenceStart));
+        if (remaining < 1500) {
+          setOrbState('listening', 'Listening...', 'Processing soon...');
+        }
+      }
+
+      requestAnimationFrame(checkAudioLevel);
+    }
+
+    requestAnimationFrame(checkAudioLevel);
+
   } catch (err) {
-    addMessage('ai', 'Could not access microphone. Please allow mic permission and try again.');
+    console.error('Mic error:', err);
+    addMessage('ai', 'Could not access microphone. Please allow mic permission.');
+    setOrbState('idle', 'Mic unavailable', 'Check browser permissions');
   }
 }
 
-function stopCallRecording() {
-  if (callRecorder && callRecorder.state !== 'inactive') {
-    callRecorder.stop();
-    callRecorder.stream.getTracks().forEach(t => t.stop());
-  }
-  isCallRecording = false;
-  document.getElementById('callMic').classList.remove('recording');
-  document.getElementById('callMic').innerHTML = '🎙️';
-  document.getElementById('micLabel').textContent = 'Tap to speak';
-  document.getElementById('micHint').textContent = 'The AI will respond with voice after you\'re done';
-}
+async function processRecording() {
+  if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
 
-async function stopCallAndProcess() {
   return new Promise((resolve) => {
-    callRecorder.onstop = async () => {
-      isCallRecording = false;
-      document.getElementById('callMic').classList.remove('recording');
-      document.getElementById('callMic').innerHTML = '🎙️';
-      document.getElementById('micLabel').textContent = 'Processing...';
-      document.getElementById('micHint').textContent = 'Transcribing your speech and generating response...';
+    mediaRecorder.onstop = async () => {
+      isRecording = false;
 
-      const audioBlob = new Blob(callChunks, { type: callRecorder.mimeType });
-      callRecorder.stream.getTracks().forEach(t => t.stop());
+      // Clean up audio context
+      if (audioContext && audioContext.state !== 'closed') {
+        audioContext.close().catch(() => {});
+      }
 
-      // Disable mic while processing
-      document.getElementById('callMic').style.pointerEvents = 'none';
-      document.getElementById('callMic').style.opacity = '0.4';
+      const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
 
-      showThinking();
+      // Stop all tracks
+      mediaRecorder.stream.getTracks().forEach(t => t.stop());
 
+      setOrbState('thinking', 'Processing...', 'Transcribing & generating response');
+
+      // Send to conversation API
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.wav');
       formData.append('language', document.getElementById('callLang').value);
@@ -434,37 +473,58 @@ async function stopCallAndProcess() {
           body: formData,
         });
         const data = await resp.json();
-        hideThinking();
 
         if (data.success) {
+          // Show user message
           addMessage('user', data.user_text);
-          conversationHistory.push({role: 'user', content: data.user_text});
+          conversationHistory.push({ role: 'user', content: data.user_text });
 
+          // Show & speak AI response
           addMessage('ai', data.ai_text);
-          conversationHistory.push({role: 'assistant', content: data.ai_text});
+          conversationHistory.push({ role: 'assistant', content: data.ai_text });
 
           if (data.audio) {
+            setOrbState('speaking', 'AI is speaking...', 'Listen...');
             await playBase64Audio(data.audio);
           }
+
+          // After AI finishes speaking, auto-listen again
+          if (callActive) {
+            startListening();
+          }
         } else {
-          addMessage('ai', 'Sorry, I couldn\'t catch that. Could you try again? (' + (data.error || 'Unknown error') + ')');
+          addMessage('ai', 'Sorry, I couldn\'t catch that. Let me listen again...');
+          // Retry listening
+          if (callActive) {
+            setTimeout(() => startListening(), 1000);
+          }
         }
       } catch (err) {
-        hideThinking();
-        addMessage('ai', 'Connection error. Please check your internet and try again.');
+        console.error('Conversation error:', err);
+        addMessage('ai', 'Connection issue. Retrying...');
+        if (callActive) {
+          setTimeout(() => startListening(), 2000);
+        }
       }
-
-      // Re-enable mic
-      document.getElementById('callMic').style.pointerEvents = 'auto';
-      document.getElementById('callMic').style.opacity = '1';
-      document.getElementById('micLabel').textContent = 'Tap to speak';
-      document.getElementById('micHint').textContent = 'Continue the conversation...';
 
       resolve();
     };
 
-    callRecorder.stop();
+    mediaRecorder.stop();
   });
+}
+
+function stopListeningCleanup() {
+  isRecording = false;
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    try {
+      mediaRecorder.stream.getTracks().forEach(t => t.stop());
+      mediaRecorder.stop();
+    } catch (e) {}
+  }
+  if (audioContext && audioContext.state !== 'closed') {
+    audioContext.close().catch(() => {});
+  }
 }
 
 async function speakText(text) {
@@ -473,7 +533,7 @@ async function speakText(text) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        text: text,
+        text,
         language: document.getElementById('callLang').value,
         speaker: document.getElementById('callVoice').value,
       }),
@@ -522,7 +582,8 @@ async function doTTS() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        text, language: document.getElementById('ttsLang').value,
+        text,
+        language: document.getElementById('ttsLang').value,
         speaker: document.getElementById('ttsSpeaker').value,
       }),
     });
@@ -558,8 +619,10 @@ async function toggleSttRecording() {
     sttRecorder.ondataavailable = (e) => { if (e.data.size > 0) sttChunks.push(e.data); };
     sttRecorder.start(250);
     isSttRecording = true;
-    document.getElementById('sttMicBtn').classList.add('recording');
-    document.getElementById('sttMicBtn').innerHTML = '⏹️';
+    const btn = document.getElementById('sttMicBtn');
+    btn.style.borderColor = '#ef4444';
+    btn.style.background = 'rgba(239,68,68,0.15)';
+    btn.innerHTML = '⏹️';
     document.getElementById('sttMicStatus').textContent = 'Recording... tap to stop';
   } catch (err) {
     showStatus(document.getElementById('sttStatus'), 'error', 'Mic access denied.');
@@ -571,8 +634,10 @@ async function stopSttAndTranscribe() {
   return new Promise((resolve) => {
     sttRecorder.onstop = async () => {
       isSttRecording = false;
-      document.getElementById('sttMicBtn').classList.remove('recording');
-      document.getElementById('sttMicBtn').innerHTML = '🎙️';
+      const btn = document.getElementById('sttMicBtn');
+      btn.style.borderColor = 'rgba(255,255,255,0.1)';
+      btn.style.background = 'rgba(255,255,255,0.05)';
+      btn.innerHTML = '🎙️';
       document.getElementById('sttMicStatus').textContent = 'Processing...';
       const blob = new Blob(sttChunks, { type: sttRecorder.mimeType });
       sttRecorder.stream.getTracks().forEach(t => t.stop());

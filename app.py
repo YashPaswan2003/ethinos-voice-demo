@@ -89,16 +89,15 @@ def speech_to_text():
 def conversation():
     """
     Full pipeline: receive audio -> STT -> Chat LLM -> TTS -> return text + audio
-    Also accepts text input directly (for typed messages).
     """
-    # Determine input: audio file or text
     user_text = None
 
     if "audio" in request.files:
-        # Step 1: Speech-to-Text
         audio_file = request.files["audio"]
         lang = request.form.get("language", "hi-IN")
         history_json = request.form.get("history", "[]")
+        scenario = request.form.get("scenario", "banking")
+        speaker = request.form.get("speaker", "meera")
 
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
             audio_file.save(tmp.name)
@@ -120,11 +119,12 @@ def conversation():
         finally:
             os.unlink(tmp_path)
     else:
-        # Text input
         data = request.json or {}
         user_text = data.get("text", "")
         lang = data.get("language", "hi-IN")
         history_json = json.dumps(data.get("history", []))
+        scenario = data.get("scenario", "banking")
+        speaker = data.get("speaker", "meera")
 
     if not user_text or not user_text.strip():
         return jsonify({"success": False, "error": "No speech detected. Please try again."}), 400
@@ -135,15 +135,18 @@ def conversation():
     except:
         history = []
 
-    # Step 2: Chat with Sarvam LLM
-    scenario = request.form.get("scenario", "banking") if "audio" in request.files else (request.json or {}).get("scenario", "banking")
-    speaker = request.form.get("speaker", "meera") if "audio" in request.files else (request.json or {}).get("speaker", "meera")
-
+    # Build messages for Chat API
+    # IMPORTANT: Sarvam requires first message after system to be from "user"
+    # So the greeting is baked into the system prompt, not sent as assistant message
     system_prompt = get_system_prompt(scenario)
 
     messages = [{"role": "system", "content": system_prompt}]
+
+    # Only add history entries, ensuring first non-system message is from user
     for h in history:
         messages.append({"role": h["role"], "content": h["content"]})
+
+    # Add current user message
     messages.append({"role": "user", "content": user_text})
 
     chat_resp = requests.post(
@@ -156,7 +159,7 @@ def conversation():
             "model": "sarvam-m",
             "messages": messages,
             "temperature": 0.5,
-            "max_tokens": 300,
+            "max_tokens": 200,
         },
     )
 
@@ -165,7 +168,7 @@ def conversation():
 
     ai_text = chat_resp.json()["choices"][0]["message"]["content"]
 
-    # Step 3: Text-to-Speech for AI response
+    # Text-to-Speech for AI response
     tts_resp = requests.post(
         f"{SARVAM_BASE}/text-to-speech",
         headers={
@@ -196,31 +199,27 @@ def conversation():
 
 
 def get_system_prompt(scenario):
+    base = """Keep responses concise — 1 to 2 sentences max, like a real phone call.
+If the customer speaks in Hindi or Hinglish, respond in the same style.
+Always be warm and natural. End with a short follow-up question to keep the conversation going.
+You have already greeted the customer, so do NOT greet again. Just respond to what they said."""
+
     prompts = {
-        "banking": """You are a friendly and professional AI customer service agent for a major Indian bank.
-You help customers with account inquiries, loan information, card services, and general banking queries.
-Keep responses concise (2-3 sentences max) and natural — like a real phone call.
-If the customer speaks in Hindi or Hinglish, respond in the same style.
-Always be warm, helpful, and end with a follow-up question to keep the conversation going.
-Start by addressing what the customer said.""",
+        "banking": f"""You are a friendly AI customer service agent for a major Indian bank.
+You help with account inquiries, loans, card services, and banking queries.
+{base}""",
 
-        "insurance": """You are a helpful AI customer service agent for an Indian insurance company.
-You assist with policy inquiries, claim status, premium payments, and new policy information.
-Keep responses concise (2-3 sentences max) and conversational — like a real phone call.
-If the customer speaks in Hindi or Hinglish, respond naturally in the same language.
-Be empathetic, clear, and always offer to help further.""",
+        "insurance": f"""You are a helpful AI customer service agent for an Indian insurance company.
+You assist with policy inquiries, claim status, premium payments, and new policies.
+{base}""",
 
-        "ecommerce": """You are a friendly AI customer support agent for an Indian e-commerce platform.
-You help with order tracking, returns, refunds, product queries, and delivery issues.
-Keep responses concise (2-3 sentences max) and casual-professional — like a real support call.
-If the customer speaks in Hindi or Hinglish, respond in the same style.
-Be solution-oriented and end with a helpful follow-up.""",
+        "ecommerce": f"""You are a friendly AI support agent for an Indian e-commerce platform.
+You help with order tracking, returns, refunds, and delivery issues.
+{base}""",
 
-        "telecom": """You are a cheerful AI customer care agent for an Indian telecom company.
-You help with recharge plans, data packs, billing queries, network issues, and new connections.
-Keep responses concise (2-3 sentences max) and friendly — like a real phone call.
-If the customer speaks in Hindi or Hinglish, respond naturally in the same way.
-Offer relevant plans or solutions proactively.""",
+        "telecom": f"""You are a cheerful AI customer care agent for an Indian telecom company.
+You help with recharge plans, data packs, billing queries, and network issues.
+{base}""",
     }
     return prompts.get(scenario, prompts["banking"])
 
