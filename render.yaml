@@ -5,7 +5,7 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
     envVars:
-      - key: SARVAM_API_KEY
+      - key: API_KEY
         value: sk_zqeef1nk_px9eIdVNTYv7woQrLtCKPUNm
       - key: PYTHON_VERSION
         value: 3.11.6
