@@ -17,52 +17,6 @@ API_BASE = "https://api.sarvam.ai"
 def index():
     return send_from_directory(".", "index.html")
 
-# ========== DEBUG ENDPOINT ==========
-@app.route("/api/debug", methods=["GET"])
-def debug():
-    """Quick test of API connectivity"""
-    tts_resp = http_requests.post(
-        f"{API_BASE}/text-to-speech",
-        headers={
-            "Content-Type": "application/json",
-            "api-subscription-key": API_KEY,
-        },
-        json={
-            "text": "Hello test",
-            "target_language_code": "en-IN",
-            "speaker": "shubh",
-            "model": "bulbul:v3",
-            "pace": 1.0,
-            "speech_sample_rate": "24000",
-            "output_audio_codec": "wav",
-        },
-    )
-
-    chat_resp = http_requests.post(
-        f"{API_BASE}/v1/chat/completions",
-        headers={
-            "Content-Type": "application/json",
-            "api-subscription-key": API_KEY,
-            "Authorization": f"Bearer {API_KEY}",
-        },
-        json={
-            "model": "sarvam-m",
-            "messages": [{"role": "user", "content": "Say hello in one sentence"}],
-            "temperature": 0.5,
-            "max_tokens": 50,
-        },
-    )
-
-    return jsonify({
-        "tts_status": tts_resp.status_code,
-        "tts_ok": tts_resp.status_code == 200,
-        "tts_error": tts_resp.text[:500] if tts_resp.status_code != 200 else None,
-        "chat_status": chat_resp.status_code,
-        "chat_ok": chat_resp.status_code == 200,
-        "chat_error": chat_resp.text[:500] if chat_resp.status_code != 200 else None,
-        "chat_response": chat_resp.json().get("choices", [{}])[0].get("message", {}).get("content", "") if chat_resp.status_code == 200 else None,
-    })
-
 # ========== TEXT TO SPEECH ==========
 @app.route("/api/tts", methods=["POST"])
 def text_to_speech():
@@ -101,10 +55,10 @@ def text_to_speech():
             return jsonify({"success": True, "audio": audio_base64})
         else:
             print(f"[TTS ERROR] Status: {resp.status_code}, Body: {resp.text[:500]}")
-            return jsonify({"success": False, "error": resp.text}), resp.status_code
+            return jsonify({"success": False, "error": "Voice generation failed. Please try again."}), 502
     except Exception as e:
         print(f"[TTS EXCEPTION] {traceback.format_exc()}")
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": "Voice service temporarily unavailable."}), 500
 
 # ========== SPEECH TO TEXT ==========
 @app.route("/api/stt", methods=["POST"])
@@ -140,10 +94,10 @@ def speech_to_text():
             })
         else:
             print(f"[STT ERROR] Status: {resp.status_code}, Body: {resp.text[:500]}")
-            return jsonify({"success": False, "error": resp.text}), resp.status_code
+            return jsonify({"success": False, "error": "Could not transcribe audio. Please try again."}), 502
     except Exception as e:
         print(f"[STT EXCEPTION] {traceback.format_exc()}")
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": "Transcription service temporarily unavailable."}), 500
     finally:
         os.unlink(tmp_path)
 
@@ -170,14 +124,14 @@ def conversation():
                     headers={"api-subscription-key": API_KEY},
                     files={"file": ("audio.wav", f, "audio/wav")},
                     data={"model": "saarika:v2.5", "language_code": lang},
-                    timeout=30,
+                    timeout=15,
                 )
 
             if stt_resp.status_code == 200:
                 user_text = stt_resp.json().get("transcript", "")
             else:
                 print(f"[CONV STT ERROR] {stt_resp.status_code}: {stt_resp.text[:500]}")
-                return jsonify({"success": False, "step": "stt", "error": stt_resp.text}), 400
+                return jsonify({"success": False, "error": "Could not understand the audio. Please speak again."}), 400
         finally:
             os.unlink(tmp_path)
     else:
@@ -203,7 +157,7 @@ def conversation():
         history = []
 
     # Build messages - ensure first message after system is ALWAYS from user
-    system_prompt = get_system_prompt(scenario)
+    system_prompt = get_system_prompt(scenario, lang)
     messages = [{"role": "system", "content": system_prompt}]
 
     # Defensive: filter history to ensure proper alternation
@@ -237,20 +191,20 @@ def conversation():
             json={
                 "model": "sarvam-m",
                 "messages": messages,
-                "temperature": 0.5,
-                "max_tokens": 200,
+                "temperature": 0.3,
+                "max_tokens": 100,
             },
-            timeout=30,
+            timeout=15,
         )
 
         if chat_resp.status_code != 200:
             print(f"[CHAT ERROR] {chat_resp.status_code}: {chat_resp.text[:500]}")
-            return jsonify({"success": False, "step": "chat", "error": chat_resp.text}), 400
+            return jsonify({"success": False, "error": "AI could not generate a response. Please try again."}), 502
 
         ai_text = chat_resp.json()["choices"][0]["message"]["content"]
     except Exception as e:
         print(f"[CHAT EXCEPTION] {traceback.format_exc()}")
-        return jsonify({"success": False, "step": "chat", "error": str(e)}), 500
+        return jsonify({"success": False, "error": "AI service temporarily unavailable."}), 500
 
     # Text-to-Speech for AI response
     try:
@@ -269,7 +223,7 @@ def conversation():
                 "speech_sample_rate": "24000",
                 "output_audio_codec": "wav",
             },
-            timeout=30,
+            timeout=15,
         )
 
         audio_base64 = None
@@ -289,9 +243,22 @@ def conversation():
     })
 
 
-def get_system_prompt(scenario):
-    base = """Keep responses concise — 1 to 2 sentences max, like a real phone call.
-If the customer speaks in Hindi or Hinglish, respond in the same style.
+def get_system_prompt(scenario, language_code="hi-IN"):
+    lang_names = {
+        "hi-IN": "Hindi",
+        "en-IN": "English",
+        "mr-IN": "Marathi",
+        "ta-IN": "Tamil",
+        "te-IN": "Telugu",
+        "bn-IN": "Bengali",
+        "gu-IN": "Gujarati",
+        "kn-IN": "Kannada",
+    }
+    lang_name = lang_names.get(language_code, "Hindi")
+
+    base = f"""Keep responses concise — 1 to 2 sentences max, like a real phone call.
+IMPORTANT: The customer's selected language is {lang_name}. You MUST respond in {lang_name} only. Match the customer's language exactly.
+If the customer mixes languages (e.g. Hinglish), respond in the same mixed style but primarily in {lang_name}.
 Always be warm and natural. End with a short follow-up question to keep the conversation going.
 You have already greeted the customer, so do NOT greet again. Just respond to what they said."""
 
@@ -316,4 +283,4 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     print("\n  Ethinos AI Voice Demo")
     print(f"  Open http://localhost:{port} in your browser\n")
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=port, debug=False)

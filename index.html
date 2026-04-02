@@ -293,7 +293,7 @@ let analyser = null;
 let silenceTimer = null;
 let isRecording = false;
 let silenceThreshold = 0.015; // adjusted for sensitivity
-let silenceDuration = 2000; // ms of silence before auto-stop
+let silenceDuration = 1400; // ms of silence before auto-stop (reduced for faster response)
 
 // =========== TAB SWITCHING ===========
 function switchTab(tab) {
@@ -319,14 +319,60 @@ async function startCall() {
   document.getElementById('callActive').classList.add('show');
   document.getElementById('chatArea').innerHTML = '';
 
-  const greetings = {
-    banking: "Namaste! Welcome to our banking helpline. How can I assist you today?",
-    insurance: "Hello! Thank you for calling our insurance support. How may I help you?",
-    ecommerce: "Hi there! Welcome to customer support. How can I help you today?",
-    telecom: "Hello! Welcome to our telecom helpline. How can I assist you?"
+  const lang = document.getElementById('callLang').value;
+  const greetingsByLang = {
+    'hi-IN': {
+      banking: "नमस्ते! हमारी बैंकिंग हेल्पलाइन में आपका स्वागत है। मैं आपकी कैसे मदद कर सकती हूँ?",
+      insurance: "नमस्ते! हमारी बीमा सेवा में आपका स्वागत है। मैं आपकी कैसे सहायता कर सकती हूँ?",
+      ecommerce: "नमस्ते! कस्टमर सपोर्ट में आपका स्वागत है। मैं आपकी कैसे मदद कर सकती हूँ?",
+      telecom: "नमस्ते! हमारी टेलीकॉम हेल्पलाइन में आपका स्वागत है। मैं आपकी कैसे मदद कर सकती हूँ?"
+    },
+    'en-IN': {
+      banking: "Hello! Welcome to our banking helpline. How can I assist you today?",
+      insurance: "Hello! Thank you for calling our insurance support. How may I help you?",
+      ecommerce: "Hi there! Welcome to customer support. How can I help you today?",
+      telecom: "Hello! Welcome to our telecom helpline. How can I assist you?"
+    },
+    'mr-IN': {
+      banking: "नमस्कार! आमच्या बँकिंग हेल्पलाइनमध्ये आपले स्वागत आहे. मी तुम्हाला कशी मदत करू शकते?",
+      insurance: "नमस्कार! आमच्या विमा सेवेत आपले स्वागत आहे. मी तुम्हाला कशी मदत करू शकते?",
+      ecommerce: "नमस्कार! कस्टमर सपोर्टमध्ये आपले स्वागत आहे. मी तुम्हाला कशी मदत करू शकते?",
+      telecom: "नमस्कार! आमच्या टेलीकॉम हेल्पलाइनमध्ये आपले स्वागत आहे. मी तुम्हाला कशी मदत करू शकते?"
+    },
+    'ta-IN': {
+      banking: "வணக்கம்! எங்கள் வங்கி உதவி எண்ணுக்கு வரவேற்கிறோம். நான் உங்களுக்கு எப்படி உதவ முடியும்?",
+      insurance: "வணக்கம்! எங்கள் காப்பீட்டு சேவைக்கு வரவேற்கிறோம். நான் உங்களுக்கு எப்படி உதவ முடியும்?",
+      ecommerce: "வணக்கம்! வாடிக்கையாளர் ஆதரவுக்கு வரவேற்கிறோம். நான் உங்களுக்கு எப்படி உதவ முடியும்?",
+      telecom: "வணக்கம்! எங்கள் தொலைத்தொடர்பு உதவி எண்ணுக்கு வரவேற்கிறோம். நான் உங்களுக்கு எப்படி உதவ முடியும்?"
+    },
+    'te-IN': {
+      banking: "నమస్కారం! మా బ్యాంకింగ్ హెల్ప్‌లైన్‌కు స్వాగతం. నేను మీకు ఎలా సహాయం చేయగలను?",
+      insurance: "నమస్కారం! మా బీమా సేవకు స్వాగతం. నేను మీకు ఎలా సహాయం చేయగలను?",
+      ecommerce: "నమస్కారం! కస్టమర్ సపోర్ట్‌కు స్వాగతం. నేను మీకు ఎలా సహాయం చేయగలను?",
+      telecom: "నమస్కారం! మా టెలికాం హెల్ప్‌లైన్‌కు స్వాగతం. నేను మీకు ఎలా సహాయం చేయగలను?"
+    },
+    'bn-IN': {
+      banking: "নমস্কার! আমাদের ব্যাংকিং হেল্পলাইনে আপনাকে স্বাগতম। আমি আপনাকে কীভাবে সাহায্য করতে পারি?",
+      insurance: "নমস্কার! আমাদের বীমা সেবায় আপনাকে স্বাগতম। আমি আপনাকে কীভাবে সাহায্য করতে পারি?",
+      ecommerce: "নমস্কার! কাস্টমার সাপোর্টে আপনাকে স্বাগতম। আমি আপনাকে কীভাবে সাহায্য করতে পারি?",
+      telecom: "নমস্কার! আমাদের টেলিকম হেল্পলাইনে আপনাকে স্বাগতম। আমি আপনাকে কীভাবে সাহায্য করতে পারি?"
+    },
+    'gu-IN': {
+      banking: "નમસ્તે! અમારી બેંકિંગ હેલ્પલાઇનમાં આપનું સ્વાગત છે. હું તમને કેવી રીતે મદદ કરી શકું?",
+      insurance: "નમસ્તે! અમારી વીમા સેવામાં આપનું સ્વાગત છે. હું તમને કેવી રીતે મદદ કરી શકું?",
+      ecommerce: "નમસ્તે! કસ્ટમર સપોર્ટમાં આપનું સ્વાગત છે. હું તમને કેવી રીતે મદદ કરી શકું?",
+      telecom: "નમસ્તે! અમારી ટેલિકોમ હેલ્પલાઇનમાં આપનું સ્વાગત છે. હું તમને કેવી રીતે મદદ કરી શકું?"
+    },
+    'kn-IN': {
+      banking: "ನಮಸ್ಕಾರ! ನಮ್ಮ ಬ್ಯಾಂಕಿಂಗ್ ಹೆಲ್ಪ್‌ಲೈನ್‌ಗೆ ಸ್ವಾಗತ. ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು?",
+      insurance: "ನಮಸ್ಕಾರ! ನಮ್ಮ ವಿಮಾ ಸೇವೆಗೆ ಸ್ವಾಗತ. ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು?",
+      ecommerce: "ನಮಸ್ಕಾರ! ಗ್ರಾಹಕ ಬೆಂಬಲಕ್ಕೆ ಸ್ವಾಗತ. ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು?",
+      telecom: "ನಮಸ್ಕಾರ! ನಮ್ಮ ಟೆಲಿಕಾಂ ಹೆಲ್ಪ್‌ಲೈನ್‌ಗೆ ಸ್ವಾಗತ. ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು?"
+    }
   };
 
-  const greeting = greetings[currentScenario];
+  const langGreetings = greetingsByLang[lang] || greetingsByLang['en-IN'];
+  const greeting = langGreetings[currentScenario];
   addMessage('ai', greeting);
   // NOTE: greeting NOT added to conversationHistory — to satisfy API ordering
 
